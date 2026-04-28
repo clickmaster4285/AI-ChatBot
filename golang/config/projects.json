@@ -1,0 +1,10 @@
+{
+  "clickmastererp": {
+    "projectName": "clickmastererp",
+    "dbType": "mongodb",
+    "dbName": "ACSS-CRM",
+    "dbUri": "mongodb://127.0.0.1:27017/ACSS-CRM",
+    "onlyGetApiAccess": true,
+    "aiModel": "llama3:8b"
+  }
+}
