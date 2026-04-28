@@ -1,0 +1,13 @@
+{
+    "collections": {
+        "projects": {
+            "type": "collection"
+        },
+        "tasks": {
+            "type": "collection"
+        },
+        "users": {
+            "type": "collection"
+        }
+    }
+}

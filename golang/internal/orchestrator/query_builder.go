@@ -7,24 +7,26 @@ type DBQuery struct {
 	Collection string
 }
 
-func BuildQuery(query string) DBQuery {
+func BuildQuery(query string, detectedCollection string, action string) DBQuery {
+
+	// fallback safety
+	collection := "projects"
+
+	if detectedCollection != "" {
+		collection = detectedCollection
+	}
 
 	q := strings.ToLower(query)
 
-	// COUNT LOGIC
+	// override action if needed
 	if strings.Contains(q, "total") ||
 		strings.Contains(q, "count") ||
 		strings.Contains(q, "length") {
-
-		return DBQuery{
-			Action:     "count",
-			Collection: "projects",
-		}
+		action = "count"
 	}
 
-	// DEFAULT
 	return DBQuery{
-		Action:     "find",
-		Collection: "projects",
+		Action:     action,
+		Collection: collection,
 	}
 }
