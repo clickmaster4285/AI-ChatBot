@@ -3,7 +3,7 @@
     "projectName": "clickmastererp",
     "dbType": "mongodb",
     "dbName": "ACSS-CRM",
-    "dbUri": "mongodb://127.0.0.1:27017/ACSS-CRM",
+    "dbUri": "mongodb://host.docker.internal:27017/ACSS-CRM?directConnection=true",
     "onlyGetApiAccess": true,
     "aiModel": "llama3:8b"
   }
