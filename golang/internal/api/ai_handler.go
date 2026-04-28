@@ -44,7 +44,6 @@ func AIQueryHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if dbQuery.Action == "count" {
-			fmt.Println("the dbQuery.Collection is ===: %s", dbQuery.Collection)
 			count, err := executor.CountDocuments(dbQuery.Collection)
 			if err != nil {
 				fmt.Println("Mongo ERROR:", err)
