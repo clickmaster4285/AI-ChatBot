@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -17,7 +16,6 @@ type MongoExecutor struct {
 }
 
 func NewMongoExecutor(uri string, dbName string) (*MongoExecutor, error) {
-
 	client, err := mongo.NewClient(options.Client().ApplyURI(uri).SetDirect(true))
 	if err != nil {
 		return nil, err
@@ -39,13 +37,7 @@ func NewMongoExecutor(uri string, dbName string) (*MongoExecutor, error) {
 
 // SIMPLE SAFE COUNT QUERY
 func (m *MongoExecutor) CountDocuments(collection string) (int64, error) {
-	fmt.Printf("the m ::: %v\n", m.DBName)
-	fmt.Printf("the collection ::: %v\n", collection)
-
 	coll := m.Client.Database(m.DBName).Collection(collection)
-
-	fmt.Printf("the coll ::: %v\n", coll)
-
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
