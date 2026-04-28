@@ -1,0 +1,75 @@
+# =========================
+# ENV / SECRETS
+# =========================
+.env
+.env.*
+*.env
+
+# =========================
+# GO BUILD FILES
+# =========================
+*.exe
+*.out
+*.test
+*.bin
+main
+
+# =========================
+# GO CACHE / MODULES
+# =========================
+/vendor/
+/go.sum
+
+# (optional: ignore go.sum only if you want flexibility)
+# normally in production → KEEP go.sum
+
+# =========================
+# DOCKER
+# =========================
+docker-compose.override.yml
+
+# =========================
+# LOGS
+# =========================
+*.log
+logs/
+tmp/
+
+# =========================
+# IDE / EDITOR
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# =========================
+# OS FILES
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# OLLAMA / AI MODELS
+# =========================
+# (IMPORTANT — never commit models)
+ollama_models/
+
+# =========================
+# QDRANT STORAGE (VECTOR DB)
+# =========================
+qdrant_data/
+
+# =========================
+# NODE (if you add frontend later)
+# =========================
+node_modules/
+dist/
+build/
+
+# =========================
+# TEMP FILES
+# =========================
+*.tmp
+*.cache
