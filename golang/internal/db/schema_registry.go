@@ -11,7 +11,8 @@ type Schema struct {
 }
 
 type CollectionSchema struct {
-	Type string `json:"type"`
+	Type    string   `json:"type"`
+	Aliases []string `json:"aliases"`
 }
 
 // In-memory cache
@@ -52,9 +53,14 @@ func DetectCollections(query string, schema Schema) []string {
 	q := strings.ToLower(query)
 	var matches []string
 
-	for col := range schema.Collections {
-		if strings.Contains(q, strings.ToLower(col)) {
-			matches = append(matches, col)
+	for colName, colSchema := range schema.Collections {
+
+		// Check aliases
+		for _, alias := range colSchema.Aliases {
+			if strings.Contains(q, strings.ToLower(alias)) {
+				matches = append(matches, colName)
+				break
+			}
 		}
 	}
 

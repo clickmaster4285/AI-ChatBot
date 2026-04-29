@@ -1,13 +1,32 @@
 {
-    "collections": {
-        "projects": {
-            "type": "collection"
-        },
-        "tasks": {
-            "type": "collection"
-        },
-        "users": {
-            "type": "collection"
-        }
+  "collections": {
+    "projects": {
+      "type": "collection",
+      "aliases": ["project", "projects"]
+    },
+    "goals": {
+      "type": "collection",
+      "aliases": ["goal", "goals"]
+    },
+    "milestones": {
+      "type": "collection",
+      "aliases": ["milestone", "milestones"]
+    },
+    "tasks": {
+      "type": "collection",
+      "aliases": ["task", "tasks"]
+    },
+    "subtasks": {
+      "type": "collection",
+      "aliases": ["subtask", "subtasks"]
+    },
+    "sub_subtasks": {
+      "type": "collection",
+      "aliases": ["sub subtask", "subsubtask", "sub_subtask", "sub-sub-task", "sub-subtask"]
+    },
+    "users": {
+      "type": "collection",
+      "aliases": ["user", "users"]
     }
+  }
 }

@@ -3,7 +3,11 @@ package security
 var AllowedCollections = map[string][]string{
 	"clickmastererp": {
 		"projects",
+		"goals",
+		"milestones",
 		"tasks",
+		"subtasks",
+		"subsubtasks",
 		"users",
 	},
 }

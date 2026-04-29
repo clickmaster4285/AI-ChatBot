@@ -1,0 +1,16 @@
+{
+  "collections": {
+    "cameras": {
+      "type": "collection",
+      "aliases": ["camera", "cameras", "cctv"]
+    },
+    "tasks": {
+      "type": "collection",
+      "aliases": ["task", "tasks"]
+    },
+    "alerts": {
+      "type": "collection",
+      "aliases": ["alert", "alerts", "warning"]
+    }
+  }
+}
