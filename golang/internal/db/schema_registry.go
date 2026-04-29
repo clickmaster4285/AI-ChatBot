@@ -2,7 +2,6 @@ package db
 
 import (
 	"encoding/json"
-	"errors"
 	"os"
 	"strings"
 )
@@ -48,16 +47,16 @@ func IsValidCollection(schema Schema, collection string) bool {
 }
 
 // SIMPLE ENTITY → COLLECTION DETECTION
-func DetectCollection(query string, schema Schema) (string, error) {
+func DetectCollections(query string, schema Schema) []string {
 
 	q := strings.ToLower(query)
+	var matches []string
 
-	// direct match against schema keys
 	for col := range schema.Collections {
 		if strings.Contains(q, strings.ToLower(col)) {
-			return col, nil
+			matches = append(matches, col)
 		}
 	}
 
-	return "", errors.New("no matching collection found in schema")
+	return matches
 }

@@ -1,31 +1,29 @@
 package ai
 
 import (
-	"encoding/json"
 	"fmt"
+	"strings"
 )
 
-func BuildPrompt(projectName string, userQuery string, data interface{}, collection string) string {
-
-	dataJSON, _ := json.MarshalIndent(data, "", "  ")
+func BuildPrompt(project string, query string, data interface{}, collections []string) string {
 
 	return fmt.Sprintf(`
-You are a data assistant.
+You are an AI assistant for project "%s".
 
-IMPORTANT DEFINITIONS:
-- "project" (system) = %s
-- "%s" (collection) = database records
-
-STRICT RULES:
-- Use ONLY the provided DATA
-- Do NOT confuse system project with database records
-- If count is provided, return EXACT number
-- Do NOT guess or assume
-
-DATA:
+User Query:
 %s
 
-USER QUERY:
+Collections:
 %s
-`, projectName, collection, string(dataJSON), userQuery)
+
+Data:
+%v
+
+Rules:
+- Do NOT guess
+- Use ONLY the data provided
+- If multiple collections exist, mention each clearly
+
+Answer:
+`, project, query, strings.Join(collections, ", "), data)
 }

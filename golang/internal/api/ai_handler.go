@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"aichatbot/internal/ai"
 	"aichatbot/internal/db"
 	"aichatbot/internal/orchestrator"
 	"aichatbot/internal/registry"
 	"aichatbot/internal/security"
-	"aichatbot/internal/ai"
 )
 
 type AIRequest struct {
@@ -31,7 +31,7 @@ func AIQueryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. SECURITY CHECK
+	// 2. SECURITY
 	if err := security.ValidateQuery(req.Query); err != nil {
 		http.Error(w, err.Error(), 403)
 		return
@@ -42,98 +42,103 @@ func AIQueryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 3. LOAD SCHEMA (🔥 NEW)
+	// 3. LOAD SCHEMA
 	schema, err := db.LoadSchema(project.ProjectName)
 	if err != nil {
 		http.Error(w, "schema not found: "+err.Error(), 500)
 		return
 	}
 
-	// 4. DETECT COLLECTION FROM QUERY (🔥 NEW)
-	detectedCollection, err := db.DetectCollection(req.Query, schema)
-	if err != nil {
-		// fallback safe default
-		detectedCollection = "projects"
+	// 4. DETECT COLLECTIONS
+	detectedCollections := db.DetectCollections(req.Query, schema)
+
+	// 🚨 STRICT MODE (recommended)
+	if len(detectedCollections) == 0 {
+		http.Error(w, "no valid collection detected from query", 400)
+		return
 	}
 
 	// 5. INTENT
 	intent := orchestrator.ParseIntent(req.Query)
 
-	// 6. BUILD DB QUERY (FIXED)
+	// 6. BUILD QUERY
 	dbQuery := orchestrator.BuildQuery(
-		req.Query,
-		detectedCollection,
 		intent.Operation,
+		detectedCollections,
 	)
 
-	// 7. SECURITY VALIDATION
+	// 7. VALIDATE ACTION
 	if err := security.ValidateAction(dbQuery.Action); err != nil {
 		http.Error(w, err.Error(), 403)
 		return
 	}
 
-	if !security.IsCollectionAllowed(project.ProjectName, dbQuery.Collection) {
-		http.Error(w, "collection not allowed", 403)
-		return
+	// 8. EXECUTE MULTI-COLLECTION
+	results := make(map[string]interface{})
+
+	if project.DBType == "mongodb" {
+
+		executor, err := db.NewMongoExecutor(project.DBUri, project.DBName)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		for _, col := range dbQuery.Collections {
+
+			// 🔐 SECURITY PER COLLECTION
+			if !security.IsCollectionAllowed(project.ProjectName, col) {
+				continue
+			}
+
+			if dbQuery.Action == "count" {
+
+				count, err := executor.CountDocuments(col)
+				if err != nil {
+					continue
+				}
+
+				results[col] = map[string]interface{}{
+					"count": count,
+				}
+
+			} else {
+
+				data, err := executor.FindAll(col)
+				if err != nil {
+					continue
+				}
+
+				results[col] = data
+			}
+		}
 	}
 
-// 8. EXECUTION
-var result interface{}
+	// 9. BUILD PROMPT
+	prompt := ai.BuildPrompt(
+		project.ProjectName,
+		req.Query,
+		results,
+		dbQuery.Collections,
+	)
 
-if project.DBType == "mongodb" {
-
-	executor, err := db.NewMongoExecutor(project.DBUri, project.DBName)
+	// 10. CALL AI
+	aiResponse, err := ai.Generate(prompt, project.AIModel)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
+		aiResponse = "AI unavailable. Showing raw data."
 	}
 
-	if dbQuery.Action == "count" {
-		count, err := executor.CountDocuments(dbQuery.Collection)
-		if err != nil {
-			http.Error(w, err.Error(), 500)
-			return
-		}
-
-		result = map[string]interface{}{
-			"count": count,
-		}
-	} else {
-		data, err := executor.FindAll(dbQuery.Collection)
-		if err != nil {
-			http.Error(w, err.Error(), 500)
-			return
-		}
-		result = data
+	// 11. RESPONSE
+	response := map[string]interface{}{
+		"project":     project.ProjectName,
+		"intent":      intent,
+		"query":       req.Query,
+		"dbQuery":     dbQuery,
+		"data":        results,
+		"ai_response": aiResponse,
+		"status":      "AI RESPONSE GENERATED",
 	}
-}
 
-// 🔥 9. BUILD PROMPT
-prompt := ai.BuildPrompt(
-	project.ProjectName,
-	req.Query,
-	result,
-	dbQuery.Collection,
-)
-
-// 🔥 10. CALL AI
-aiResponse, err := ai.Generate(prompt, project.AIModel)
-if err != nil {
-	// fallback: return raw data if AI fails
-	aiResponse = "AI unavailable. Showing raw data."
-}
-
-// 🔥 11. RESPONSE
-response := map[string]interface{}{
-	"project":     project.ProjectName,
-	"intent":      intent,
-	"query":       req.Query,
-	"dbQuery":     dbQuery,
-	"data":        result,
-	"ai_response": aiResponse,
-	"status":      "AI RESPONSE GENERATED",
-}
-
-w.Header().Set("Content-Type", "application/json")
-json.NewEncoder(w).Encode(response)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }

@@ -1,32 +1,14 @@
 package orchestrator
 
-import "strings"
-
 type DBQuery struct {
-	Action     string
-	Collection string
+	Action      string   `json:"action"`
+	Collections []string `json:"collections"`
 }
 
-func BuildQuery(query string, detectedCollection string, action string) DBQuery {
-
-	// fallback safety
-	collection := "projects"
-
-	if detectedCollection != "" {
-		collection = detectedCollection
-	}
-
-	q := strings.ToLower(query)
-
-	// override action if needed
-	if strings.Contains(q, "total") ||
-		strings.Contains(q, "count") ||
-		strings.Contains(q, "length") {
-		action = "count"
-	}
+func BuildQuery(action string, detectedCollections []string) DBQuery {
 
 	return DBQuery{
-		Action:     action,
-		Collection: collection,
+		Action:      action,
+		Collections: detectedCollections,
 	}
 }
