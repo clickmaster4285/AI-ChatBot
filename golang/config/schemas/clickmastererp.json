@@ -23,7 +23,7 @@
     "sub_subtasks": {
       "type": "collection",
       "aliases": ["sub subtask", "subsubtask", "sub_subtask", "sub-sub-task", "sub-subtask"]
-    },
+    } , 
     "users": {
       "type": "collection",
       "aliases": ["user", "users"]
