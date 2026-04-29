@@ -8,6 +8,7 @@ import (
 	"aichatbot/internal/orchestrator"
 	"aichatbot/internal/registry"
 	"aichatbot/internal/security"
+	"aichatbot/internal/ai"
 )
 
 type AIRequest struct {
@@ -76,47 +77,63 @@ func AIQueryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 8. EXECUTION
-	var result interface{}
+// 8. EXECUTION
+var result interface{}
 
-	if project.DBType == "mongodb" {
+if project.DBType == "mongodb" {
 
-		executor, err := db.NewMongoExecutor(project.DBUri, project.DBName)
+	executor, err := db.NewMongoExecutor(project.DBUri, project.DBName)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	if dbQuery.Action == "count" {
+		count, err := executor.CountDocuments(dbQuery.Collection)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
 		}
 
-		if dbQuery.Action == "count" {
-			count, err := executor.CountDocuments(dbQuery.Collection)
-			if err != nil {
-				http.Error(w, err.Error(), 500)
-				return
-			}
-
-			result = map[string]interface{}{
-				"count": count,
-			}
-		} else {
-			data, err := executor.FindAll(dbQuery.Collection)
-			if err != nil {
-				http.Error(w, err.Error(), 500)
-				return
-			}
-			result = data
+		result = map[string]interface{}{
+			"count": count,
 		}
+	} else {
+		data, err := executor.FindAll(dbQuery.Collection)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		result = data
 	}
+}
 
-	// 9. RESPONSE
-	response := map[string]interface{}{
-		"project":  project.ProjectName,
-		"intent":   intent,
-		"query":    req.Query,
-		"dbQuery":  dbQuery,
-		"result":   result,
-		"status":   "SCHEMA-DRIVEN EXECUTION DONE",
-	}
+// 🔥 9. BUILD PROMPT
+prompt := ai.BuildPrompt(
+	project.ProjectName,
+	req.Query,
+	result,
+	dbQuery.Collection,
+)
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+// 🔥 10. CALL AI
+aiResponse, err := ai.Generate(prompt, project.AIModel)
+if err != nil {
+	// fallback: return raw data if AI fails
+	aiResponse = "AI unavailable. Showing raw data."
+}
+
+// 🔥 11. RESPONSE
+response := map[string]interface{}{
+	"project":     project.ProjectName,
+	"intent":      intent,
+	"query":       req.Query,
+	"dbQuery":     dbQuery,
+	"data":        result,
+	"ai_response": aiResponse,
+	"status":      "AI RESPONSE GENERATED",
+}
+
+w.Header().Set("Content-Type", "application/json")
+json.NewEncoder(w).Encode(response)
 }
